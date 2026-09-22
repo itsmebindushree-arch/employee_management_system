@@ -100,7 +100,7 @@ Use Swagger UI to capture the required screenshots after configuring MySQL:
 4. Request a nonexistent employee ID and capture the `404` error.
 5. Create an employee, stop Uvicorn, start it again, and retrieve it with `GET /employees/{id}`. The retained record demonstrates persistence.
 
-Existing Task 1 screenshots remain in `screenshots/`; add the Task 2 Swagger captures there before submission.
+Task 2 Swagger screenshots are available in the `screenshots/` folder. They include the current MySQL-backed API responses for employee creation, CRUD operations, validation errors, and the persistence test showing the same employee before and after restarting the FastAPI application.
 
 ## Notes
 
