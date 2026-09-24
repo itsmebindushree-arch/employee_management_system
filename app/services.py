@@ -52,8 +52,36 @@ def create_employee(db: Session, employee_data: EmployeeCreate) -> Employee:
     return employee
 
 
-def get_all_employees(db: Session) -> list[Employee]:
-    return list(db.scalars(select(Employee).order_by(Employee.id)))
+def get_all_employees(
+    db: Session,
+    search: str | None = None,
+    department: str | None = None,
+    work_mode: str | None = None,
+    is_active: bool | None = None,
+    limit: int = 10,
+    offset: int = 0,
+) -> tuple[int, list[Employee]]:
+    """Fetch one ordered page after applying all requested SQL filters."""
+    statement = select(Employee)
+
+    if search:
+        statement = statement.where(
+            func.lower(Employee.name).like(f"%{search.lower()}%")
+        )
+    if department:
+        statement = statement.where(
+            func.lower(Employee.department) == department.lower()
+        )
+    if work_mode is not None:
+        statement = statement.where(Employee.work_mode == work_mode)
+    if is_active is not None:
+        statement = statement.where(Employee.is_active == is_active)
+
+    total = db.scalar(select(func.count()).select_from(statement.subquery())) or 0
+    employees = list(
+        db.scalars(statement.order_by(Employee.id).offset(offset).limit(limit))
+    )
+    return total, employees
 
 
 def get_employee_by_id(db: Session, employee_id: int) -> Employee:

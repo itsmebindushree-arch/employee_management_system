@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from typing import Annotated, Literal
+
+from fastapi import Depends, FastAPI, Query
 from sqlalchemy.orm import Session
 
 from .database import Base, engine, get_db
 from . import models  # Ensures Employee metadata is registered before table creation.
-from .schemas import EmployeeCreate, EmployeeResponse, EmployeeUpdate
+from .schemas import EmployeeCreate, EmployeeListResponse, EmployeeResponse, EmployeeUpdate
 from .services import (
     create_employee,
     delete_employee,
@@ -48,10 +50,36 @@ def add_employee(employee: EmployeeCreate, db: Session = Depends(get_db)):
 
 @app.get(
     "/employees",
-    response_model=list[EmployeeResponse]
+    response_model=EmployeeListResponse,
+    summary="Search, filter, and browse employees",
 )
-def list_employees(db: Session = Depends(get_db)):
-    return get_all_employees(db)
+def list_employees(
+    db: Session = Depends(get_db),
+    search: Annotated[
+        str | None, Query(description="Case-insensitive partial employee-name search")
+    ] = None,
+    department: Annotated[
+        str | None, Query(description="Case-insensitive exact department filter")
+    ] = None,
+    work_mode: Annotated[
+        Literal["WFH", "WFO"] | None, Query(description="Work location mode")
+    ] = None,
+    is_active: Annotated[
+        bool | None, Query(description="Filter active (true) or inactive (false) employees")
+    ] = None,
+    limit: Annotated[int, Query(ge=1, le=100, description="Maximum records to return")] = 10,
+    offset: Annotated[int, Query(ge=0, description="Number of matching records to skip")] = 0,
+):
+    total, employees = get_all_employees(
+        db,
+        search=search,
+        department=department,
+        work_mode=work_mode,
+        is_active=is_active,
+        limit=limit,
+        offset=offset,
+    )
+    return {"total": total, "limit": limit, "offset": offset, "items": employees}
 
 
 @app.get(

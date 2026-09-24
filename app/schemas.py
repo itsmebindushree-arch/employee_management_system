@@ -48,3 +48,12 @@ class EmployeeResponse(BaseModel):
     work_mode: Literal["WFH", "WFO"]
     is_active: bool
     created_at: datetime
+
+
+class EmployeeListResponse(BaseModel):
+    """A page of employees together with pagination metadata."""
+
+    total: int = Field(..., ge=0, description="Matching employees before pagination")
+    limit: int = Field(..., ge=1, le=100, description="Requested page size")
+    offset: int = Field(..., ge=0, description="Requested number of records to skip")
+    items: list[EmployeeResponse]
